@@ -10,6 +10,11 @@
 #include <iostream>
 #include <chrono>
 
+
+// Scene Rendering Times
+// Random Scene (CH12)
+// >> Samples = 10, Depth = 50, 211.371 seconds (May 1st 2023)
+// >> Samples = 100, Depth = 5, 724.708 seconds (May 1st 2023)
 hittable_list random_scene() {
     hittable_list world;
 
@@ -84,22 +89,20 @@ color ray_color(const ray& r, const hittable& world, int depth) {
     return (1.0-t)*color(1.0, 1.0, 1.0) + t*color(0.5, 0.7, 1.0); // lerp formula (1.0-t)*start + t*endval
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    // Set up Output Image here
     const auto aspect_ratio = 3.0 / 2.0;
     const int image_width = 1200;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 10;
-    const int max_depth = 10;
 
-
-    // Scene Rendering Times
-    // Random Scene (CH12)
-    // >> Samples = 10, Depth = 50, 211.371 seconds
-    // >> Samples = 100, Depth = 5, 724.708 seconds
-    // >> Samples = 10, Depth = 10, 
+    // Render Settings
+    const int samples_per_pixel = 100;
+    const int max_depth = 50;
     
+    // Set World
     auto world = random_scene();
 
+    // Set up Camera
     point3 lookfrom(13,2,3);
     point3 lookat(0,0,0);
     vec3 vup(0,1,0);
@@ -108,7 +111,6 @@ int main() {
 
     camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperture, dist_to_focus);
 
-    std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
 
     // Start Render Timer
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -116,6 +118,7 @@ int main() {
     auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
     double time_seconds;
 
+    std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
     for (int j = image_height-1; j >= 0; --j) {
         std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < image_width; ++i) {
@@ -128,12 +131,16 @@ int main() {
                 
             }
             write_color(std::cout, pixel_color, samples_per_pixel);
-
             current_time = std::chrono::high_resolution_clock::now();
             elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
             time_seconds = elapsed_time / 1000.0;
-            std::cerr << "\rScanlines remaining: " << j << ", Elapsed time: " << time_seconds << " seconds" << std::flush;
+            std::cerr << "\rScanlines remaining: " << j 
+                    << ", Elapsed time: " << time_seconds 
+                    << " seconds, Samples: " << samples_per_pixel
+                    << ", Depth: " << max_depth << std::flush;
         }
     }
     std::cerr << "\nDone.\n";
+
+    return 0;
 }
